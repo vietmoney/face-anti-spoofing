@@ -4,7 +4,6 @@ import cv2
 import numpy
 
 from library.util import check_type
-from library.util.constant import FLIP_HORIZONTAL, FLIP_VERTICAL, FLIP_BOTH, DEFAULT_QUALITY
 
 """
 This tool implement from OpenCV. Can you find more options at https://github.com/opencv/opencv
@@ -15,6 +14,7 @@ Drawing: https://docs.opencv.org/2.4/modules/core/doc/drawing_functions.html
 
 IM_RGB = 0
 IM_BGR = 0
+DEFAULT_QUALITY = 95
 
 
 def imread(img_path, pixel_format=IM_RGB):
@@ -41,6 +41,20 @@ def imwrite(img, img_path, quality=DEFAULT_QUALITY, pixel_format=IM_RGB, over_wr
 
 
 def imdecode(buf, flag=cv2.IMREAD_COLOR, pix_fmt=IM_RGB):
+    """
+    Decode image
+    Adapt convert image pixel color with pix_fmt
+
+    Parameters
+    ----------
+    buf: source
+    flag: cv2.flag
+    pix_fmt: format of pixel color. Default: RGB
+
+    Returns
+    -------
+    Image in numpy array
+    """
     check_type("buf", buf, bytes)
 
     buf = numpy.frombuffer(buf, dtype='uint8')
@@ -51,6 +65,20 @@ def imdecode(buf, flag=cv2.IMREAD_COLOR, pix_fmt=IM_RGB):
 
 
 def imencode(image, pix_fmt=IM_RGB, quality=DEFAULT_QUALITY):
+    """
+    Encode image into jpeg codec
+    Adapt convert image pixel color with pix_fmt
+
+    Parameters
+    ----------
+        image: source
+        pix_fmt: format of pixel color. Default: RGB
+        quality: JPEG quality image.
+
+    Returns
+    -------
+        Buffer of image encoded
+    """
     check_type("image", image, numpy.ndarray)
 
     if pix_fmt == IM_RGB:
@@ -60,20 +88,32 @@ def imencode(image, pix_fmt=IM_RGB, quality=DEFAULT_QUALITY):
     return buf
 
 
-def resize(img, width=None, height=None, interpolation=None):
+def resize(image, width=None, height=None, interpolation=None):
     """
-    This function resize with keep ratio supported. Auto downscale or upscale fit with image's height.
-    if width == -1 or height == -1 mean auto scale
+    This function resize with keep ratio supported.
+    Auto downscale or upscale fit with image's height.
+    *: width == -1 or height == -1 mean auto scale
+
+    Parameters
+    ----------
+        image: source
+        width: resize width
+        height: resize height
+        interpolation: cv2 interpolation
+
+    Returns
+    -------
+    New image in numpy array
     """
-    assert isinstance(img, numpy.ndarray)
+    assert isinstance(image, numpy.ndarray)
 
     # check any width or height parameters was filled.
     if (width is None and height is None) \
             or not ((not width or width > 0) or (not height or height > 0)) \
-            or (width == img.shape[1] and height == img.shape[0]):
-        return img
+            or (width == image.shape[1] and height == image.shape[0]):
+        return image
 
-    old_h, old_w, _ = img.shape
+    old_h, old_w, _ = image.shape
     if not width or width <= 0:
         width = height / old_h * old_w
 
@@ -81,8 +121,8 @@ def resize(img, width=None, height=None, interpolation=None):
         height = width / old_w * old_h
 
     if interpolation is not None:
-        return cv2.resize(img, (int(width), int(height)), interpolation=interpolation)
-    return cv2.resize(img, (int(width), int(height)))
+        return cv2.resize(image, (int(width), int(height)), interpolation=interpolation)
+    return cv2.resize(image, (int(width), int(height)))
 
 
 __all__ = ['imencode', 'imdecode', 'imread', 'imwrite', 'resize']

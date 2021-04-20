@@ -1,5 +1,4 @@
 import cv2
-
 import numpy
 
 __all__ = ['show_image', 'destroy_windows', 'draw_square']

@@ -1,10 +1,10 @@
+import logging
 from typing import Union
 from urllib.parse import unquote
 
 import click
-import requests
 import nptyping as npt
-import logging
+import requests
 from fastapi import UploadFile, HTTPException, Form
 from starlette.datastructures import UploadFile as ULFile
 
@@ -18,6 +18,17 @@ def get_logger(name: str = "API", level=logging.INFO):
 
 
 def image_read(image: Union[str, UploadFile] = Form(...)) -> npt.NDArray[npt.UInt8]:
+    """
+    Read image from request. Support binary image from Form and read image from URL.
+
+    Parameters
+    ----------
+    image: request image. FileIO or URL
+
+    Returns
+    -------
+    Image in numpy array
+    """
     logger = get_logger()
 
     # check filled
