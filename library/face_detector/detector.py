@@ -1,3 +1,7 @@
+__author__ = "tindang.ht97@gmail.com"
+__copyright__ = "Copyright 2021, VietMoney Face Anti-spoofing"
+
+
 from typing import List, Tuple
 
 import nptyping as npt
@@ -16,6 +20,7 @@ _CPU_DEVICE = "cpu"
 class RetinaFace(object):
     """
     FaceDetector implement RetinaFace
+
     Parameters
     ----------
     model_path: str
@@ -138,13 +143,26 @@ class RetinaFace(object):
             faces = faces[order]
         return faces
 
-    def detect(self, img: numpy.ndarray, threshold, top=500) \
+    def detect(self, image: numpy.ndarray, threshold, top=500) \
             -> List[Tuple[npt.NDArray[npt.Float], numpy.float32, npt.NDArray[npt.Float]]]:
+        """
+        Detect faces in image.
+
+        Parameters
+        ----------
+            image: image source
+            threshold: face threshold
+            top: top k of faces.
+
+        Yields
+        -------
+            List of face include [box, score, land_mark]
+        """
         # update decoder.
-        self.update_prior(img.shape[:2])
+        self.update_prior(image.shape[:2])
 
         # transform image
-        transformed_img = self.transform(img)
+        transformed_img = self.transform(image)
 
         # forward
         loc_encoded, score_encoded, landms_encoded = self.model(transformed_img)
@@ -162,27 +180,21 @@ class RetinaFace(object):
 
 class FaceDetector(object):
     """
-    FaceDetection merging FaceDetector -> FaceAligner -> FaceFilter -> faces
-
-    Parameters
-    ----------
-    model_path: str
-        Path of pre-trained model
-
-    detect_threshold: float
-        Threshold of confidence score of detector
-
-    scale_size: int
-        Scale size input image, which used to detect face.
-
-    device: str
-        (Default: cpu) CPU or GPU ('cuda[:gpu_id]')
-
+    Face detector implement from RetinaFace: https://github.com/biubug6/Pytorch_Retinaface
+    with scale step that speedup and normalize input data.
     """
 
     def __init__(self, model_path,
                  detect_threshold=0.975,
                  scale_size=480, device='cpu'):
+        """
+        Parameters
+        ----------
+            model_path: Path of pre-trained model
+            detect_threshold: Threshold of confidence score of detector
+            scale_size: Scale size input image.
+            device: device model loaded in. (Default: cpu)
+        """
         # prepare face detector
         self.retina_face = RetinaFace(model_path, device=device)
 
@@ -192,6 +204,17 @@ class FaceDetector(object):
         self.detect_threshold = detect_threshold
 
     def process(self, image) -> List[Tuple[List[int], float, List[List[int]]]]:
+        """
+        Post process of face detected from model
+
+        Parameters
+        ----------
+            image: image source
+
+        Returns
+        -------
+            List of face with raw resolution
+        """
         # scaling source -> speed up face detect process
         height, width = image.shape[:2]
         scale = max(height / self.scale_size, 1.)

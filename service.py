@@ -1,33 +1,24 @@
+__author__ = "tindang.ht97@gmail.com"
+__copyright__ = "Copyright 2021, VietMoney Face Anti-spoofing"
+
+
+import os
 import signal
 import sys
-import time
-import os
-from typing import Optional, List, Union
-from urllib.parse import unquote
+from typing import Sequence
 
 import click
-import requests
-import uvicorn
+import numpy
 import orjson
-from fastapi import FastAPI, UploadFile, HTTPException, Form
-from pydantic import BaseModel
-from starlette.datastructures import UploadFile as ULFile
+import uvicorn
+from fastapi import FastAPI, HTTPException, Depends
 
-from library.task_manager import SpoofingDetectorWorker, FaceDetectorWorker
-from library.util.image import imdecode, imread
+from library.task_manager import stop_worker, SpoofingDetectorWorker, FaceDetectorWorker
+from library.util.api import image_read, get_logger
+from library.util.image import imread
 
-
-class FaceDetectRespond(BaseModel):
-    size: int
-    boxes: List[List[int]]
-    landmarks: List[List[List[int]]]
-    images: Optional[List[str]] = None
-
-
-class AntiSpoofingRespond(BaseModel):
-    nums: int
-    is_reals: Optional[List[bool]]
-    scores: Optional[List[float]]
+FACE_DETECTOR_KEY = "fa_face_detector"
+FACE_ANTI_SPOOFING = "fa_face_anti_spoofing"
 
 
 @click.group()
@@ -37,22 +28,22 @@ class AntiSpoofingRespond(BaseModel):
 @click.option("--detector-threshold",
               default=0.95,
               type=float,
-              help="Face detector model threshold")
+              help="Face detector model threshold. Default: 0.95")
 @click.option("--detector-scale",
               default=720,
               type=int,
-              help="Face detector model scale. >= 240")
+              help="Face detector model scale. Default: 720 (>= 240px)")
 @click.option("--spoofing-model",
               default="data/pretrained/fasnet_v1se_v2.pth.tar",
               help="Face anti-spoofing file path")
 @click.option("--device",
               default="cpu",
               type=str,
-              help="Device to load model.")
+              help="Device to load model. Default: CPU")
 @click.version_option("1.0")
 @click.pass_context
-def main(ctx, detector_model, detector_threshold, detector_scale,
-         spoofing_model, device):
+def main(ctx, detector_model: str, detector_threshold: float, detector_scale: int, spoofing_model: str, device: str):
+    device = device.lower()
     face_detector = FaceDetectorWorker(detector_model,
                                        detect_threshold=detector_threshold,
                                        scale_size=detector_scale,
@@ -60,8 +51,8 @@ def main(ctx, detector_model, detector_threshold, detector_scale,
     spoofing_detector = SpoofingDetectorWorker(spoofing_model, device)
 
     ctx.ensure_object(dict)
-    ctx.obj['face_detector'] = face_detector
-    ctx.obj['spoofing_detector'] = spoofing_detector
+    ctx.obj[FACE_DETECTOR_KEY] = face_detector
+    ctx.obj[FACE_ANTI_SPOOFING] = spoofing_detector
 
 
 @main.command(help="Detect face in images")
@@ -92,48 +83,44 @@ def main(ctx, detector_model, detector_threshold, detector_scale,
     is_flag=True
 )
 @click.pass_context
-def detect(ctx, images, json, quiet, count, overwrite):
+def detect(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, overwrite: bool):
     """CLI"""
     if not json and quiet:
         raise click.UsageError("No output selected!")
 
     results = list()
-    face_detector = ctx.obj['face_detector']
 
     # start service
-    face_detector.start()
+    with ctx.obj[FACE_DETECTOR_KEY] as face_detector:
+        for idx, img_path in enumerate(images):
+            image = imread(img_path)
+            faces = face_detector(image).respond_data
 
-    for idx, img_path in enumerate(images):
-        image = imread(img_path)
-        faces = face_detector(image).respond_data
+            boxes = list()
+            scores = list()
+            landmarks = list()
+            for box, score, lm in faces:
+                boxes.append(box.tolist())
+                scores.append(float(score))
+                landmarks.append(lm.tolist())
 
-        boxes = list()
-        scores = list()
-        landmarks = list()
-        for box, score, lm in faces:
-            boxes.append(box.tolist())
-            scores.append(float(score))
-            landmarks.append(lm.tolist())
+            result = {
+                "path": os.path.basename(img_path),
+                "boxes": boxes,
+                "scores": scores,
+                "landmarks": landmarks
+            }
 
-        result = {
-            "path": os.path.basename(img_path),
-            "boxes": boxes,
-            "scores": scores,
-            "landmarks": landmarks
-        }
+            if not quiet:
+                result_str = str(result)
 
-        if not quiet:
-            result_str = str(result)
+                if count:
+                    result_str = f"{idx + 1}/{len(images)} >> " + result_str
 
-            if count:
-                result_str = f"{idx + 1}/{len(images)} >> " + result_str
-
-            print(result_str)
-        elif count:
-            print(f"{idx + 1}/{len(images)}", end="\r")
-        results.append(result)
-
-    face_detector.stop()
+                print(result_str)
+            elif count:
+                print(f"{idx + 1}/{len(images)}", end="\r")
+            results.append(result)
 
     if not json:
         sys.exit(0)
@@ -175,14 +162,14 @@ def detect(ctx, images, json, quiet, count, overwrite):
     is_flag=True
 )
 @click.pass_context
-def spoofing(ctx, images, json, quiet, count, overwrite):
+def spoofing(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, overwrite: bool):
     """CLI"""
     if not json and quiet:
         raise click.UsageError("No output selected!")
 
     results = list()
-    face_detector = ctx.obj['face_detector']
-    spoofing_detector = ctx.obj['spoofing_detector']
+    face_detector = ctx.obj[FACE_DETECTOR_KEY]
+    spoofing_detector = ctx.obj[FACE_ANTI_SPOOFING]
 
     # start service
     face_detector.start()
@@ -233,72 +220,33 @@ def spoofing(ctx, images, json, quiet, count, overwrite):
 
 
 @main.command(help="Run service as API")
-@click.option("--host", default="127.0.0.1", type=str)
-@click.option("--port", default=8000, type=int)
-@click.option("--version", default="1.0.0", type=str)
+@click.option("--host", help="API host. Default: localhost", default="localhost", type=str)
+@click.option("--port", help="API port. Default: 8000", default=8000, type=int)
+@click.option("--version", help="API version.", default="1.0.0", type=str)
 @click.pass_context
-def api(ctx, host, port, version):
-    face_detector = ctx.obj['face_detector']
-    spoofing_detector = ctx.obj['spoofing_detector']
-
-    def signal_handler(*args, **kwargs):
-        face_detector.stop()
-        spoofing_detector.stop()
-
-        while face_detector.is_alive and spoofing_detector.is_alive():
-            time.sleep(0.25)
+def api(ctx, host: str, port: int, version: str):
+    face_detector = ctx.obj[FACE_DETECTOR_KEY]
+    spoofing_detector = ctx.obj[FACE_ANTI_SPOOFING]
 
     # start service
     face_detector.start()
     spoofing_detector.start()
 
-    _app = FastAPI(
+    app = FastAPI(
         title="Vietmoney Face Attendance",
         version=version
     )
 
-    @_app.get("/", description="Face Anti Spoofing - VietMoney")
+    logger = get_logger()
+
+    @app.get("/", description="Face Anti Spoofing - VietMoney")
     def hello():
-        return "Welcome to Face Anti Spoofing - VietMoney\nAuthor: TinDang"
+        return "Welcome to Face Detect & Anti Spoofing - VietMoney\nAuthor: TinDang"
 
-    @_app.post("/spoofing",
-               response_model=AntiSpoofingRespond,
-               summary="Detect spoofing face",
-               description="Detect spoofing face from image and face's box")
-    def anti_spoofing(image: Union[UploadFile, str] = Form(...)):
-        # check filled
-        if image is None:
-            raise HTTPException(400, "Require field `image`")
-
-        # adapter with many type of image field
-        if isinstance(image, str):
-            image = unquote(image)
-            try:
-                rq = requests.get(image)
-            except Exception:
-                raise HTTPException(400, "Wrong URL format!") from None
-
-            if rq.status_code != 200:
-                raise HTTPException(400, "Image's URL isn't correct")
-            buf = rq.content
-            click.echo(f"REQUEST URL: {image}")
-        elif isinstance(image, ULFile):
-            if not image.content_type.startswith("image"):
-                raise HTTPException(400, "File content must be 'image'")
-            buf = image.file.read()
-            click.echo(f"REQUEST URL: {image.filename}")
-        else:
-            raise HTTPException(400, "Params type not support!")
-
-        # decode image
-        if not len(buf):
-            raise HTTPException(400, "File empty error!")
-
-        try:
-            image = imdecode(buf)
-        except Exception:
-            raise HTTPException(400, "Image format error!") from None
-
+    @app.post("/spoofing",
+              summary="Detect spoofing face",
+              description="Detect spoofing face from image and face's box")
+    def anti_spoofing(image: numpy.ndarray = Depends(image_read)):
         faces = face_detector(image).respond_data
         if len(faces) <= 0:
             raise HTTPException(400, "Can't detect any face in image.")
@@ -308,17 +256,42 @@ def api(ctx, host, port, version):
         spoofs = spoof_msg.respond_data
         respond = {
             "nums": len(spoofs),
-            "is_reals": [is_spoof for is_spoof, _ in spoofs],
-            "scores": [score for _, score in spoofs],
+            "is_reals": [bool(is_spoof) for is_spoof, _ in spoofs],
+            "scores": [round(float(score), 4) for _, score in spoofs],
             "boxes": boxes
         }
-        click.echo(f"RESPOND: {respond}")
+        logger.info(f"RESPOND: {respond}")
         return respond
 
-    uvicorn.run(_app, host=host, port=port)
-    signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame))
-    print("Press Ctrl+C to stop.")
-    signal.pause()
+    @app.post("/detect",
+              summary="Detect face",
+              description="Detect face from image and face's info")
+    def face_detect(image: numpy.ndarray = Depends(image_read)):
+        faces = face_detector(image).respond_data
+
+        if len(faces) <= 0:
+            raise HTTPException(400, "Can't detect any face in image.")
+
+        boxes = list()
+        scores = list()
+        landmarks = list()
+        for box, score, lm in faces:
+            boxes.append(box.tolist())
+            scores.append(round(float(score), 4))
+            landmarks.append(lm.tolist())
+
+        respond = {
+            "nums": len(faces),
+            "boxes": boxes,
+            "scores": scores,
+            "landmarks": landmarks
+        }
+        logger.info(f"RESPOND: {respond}")
+        return respond
+
+    uvicorn.run(app, host=host, port=port)
+    signal.signal(signal.SIGINT, lambda sig, frame: stop_worker(face_detector, spoofing_detector))
+    print("API have been down! Press Ctrl+C to exit.")
 
 
 if __name__ == '__main__':

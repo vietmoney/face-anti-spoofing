@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile
     image: face-anti-spoofing-core:latest
     ports:
-    - 8000:8000
+    - ${FA_API_PORT}:${FA_API_PORT}
     expose:
-      - 8000
+      - ${FA_API_PORT}
     env_file:
-      - config.env
+      - .env
     restart: always
