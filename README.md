@@ -3,7 +3,7 @@
 
 This repository make api using for face attendance with anti spoofing.
 
-## Install
+## Installation
 ```shell
 pip3 install -r requirements.txt
 ```

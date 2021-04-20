@@ -1,4 +1,4 @@
-__author__ = "tindang.ht97@gmail.com"
+__author__ = "tindht@vietmoney.vn"
 __copyright__ = "Copyright 2021, VietMoney Face Anti-spoofing"
 
 
