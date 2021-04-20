@@ -1,6 +1,7 @@
 import signal
 import sys
 import time
+import os
 from typing import Optional, List, Union
 from urllib.parse import unquote
 
@@ -29,7 +30,7 @@ class AntiSpoofingRespond(BaseModel):
     scores: Optional[List[float]]
 
 
-@click.group("VietMoney face anti spoofing")
+@click.group()
 @click.option("--detector-model",
               default="data/pretrained/retina_face.pth.tar",
               help="Face detector model file path")
@@ -63,13 +64,118 @@ def main(ctx, detector_model, detector_threshold, detector_scale,
     ctx.obj['spoofing_detector'] = spoofing_detector
 
 
-@main.command(help="Run service as CLI")
-@click.argument("image-path", nargs=-1, required=True, type=click.Path(exists=True))
-@click.option("--json", "-j", help="Export result to json file", type=click.Path(exists=False, writable=True))
-@click.option("--quiet", "-q", help="Turn off STD output", is_flag=True)
-@click.option("--count", "-c", help="Counting image during process", is_flag=True)
+@main.command(help="Detect face in images")
+@click.argument(
+    "images",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True)
+)
+@click.option(
+    "--json", "-j",
+    help="Export result to json file",
+    type=click.Path(exists=False, writable=True)
+)
+@click.option(
+    "--quiet", "-q",
+    help="Turn off STD output",
+    is_flag=True
+)
+@click.option(
+    "--count", "-c",
+    help="Counting image during process",
+    is_flag=True
+)
+@click.option(
+    "--overwrite", "-y",
+    help="Force write json file.",
+    is_flag=True
+)
 @click.pass_context
-def cli(ctx, image_path, json, quiet, count):
+def detect(ctx, images, json, quiet, count, overwrite):
+    """CLI"""
+    if not json and quiet:
+        raise click.UsageError("No output selected!")
+
+    results = list()
+    face_detector = ctx.obj['face_detector']
+
+    # start service
+    face_detector.start()
+
+    for idx, img_path in enumerate(images):
+        image = imread(img_path)
+        faces = face_detector(image).respond_data
+
+        boxes = list()
+        scores = list()
+        landmarks = list()
+        for box, score, lm in faces:
+            boxes.append(box.tolist())
+            scores.append(float(score))
+            landmarks.append(lm.tolist())
+
+        result = {
+            "path": os.path.basename(img_path),
+            "boxes": boxes,
+            "scores": scores,
+            "landmarks": landmarks
+        }
+
+        if not quiet:
+            result_str = str(result)
+
+            if count:
+                result_str = f"{idx + 1}/{len(images)} >> " + result_str
+
+            print(result_str)
+        elif count:
+            print(f"{idx + 1}/{len(images)}", end="\r")
+        results.append(result)
+
+    face_detector.stop()
+
+    if not json:
+        sys.exit(0)
+
+    if os.path.isfile(json):
+        if not overwrite:
+            if not click.confirm(f"Overwrite `{os.path.basename(json)}`?", default=True):
+                raise FileExistsError(json)
+
+    with open(json, "wb") as f:
+        f.write(orjson.dumps(results))
+
+
+@main.command(help="Detect spoofing face in images")
+@click.argument(
+    "images",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True)
+)
+@click.option(
+    "--json", "-j",
+    help="Export result to json file",
+    type=click.Path(exists=False, writable=True)
+)
+@click.option(
+    "--quiet", "-q",
+    help="Turn off STD output",
+    is_flag=True
+)
+@click.option(
+    "--count", "-c",
+    help="Counting image during process",
+    is_flag=True
+)
+@click.option(
+    "--overwrite", "-y",
+    help="Force write json file.",
+    is_flag=True
+)
+@click.pass_context
+def spoofing(ctx, images, json, quiet, count, overwrite):
     """CLI"""
     if not json and quiet:
         raise click.UsageError("No output selected!")
@@ -82,7 +188,7 @@ def cli(ctx, image_path, json, quiet, count):
     face_detector.start()
     spoofing_detector.start()
 
-    for idx, img_path in enumerate(image_path):
+    for idx, img_path in enumerate(images):
         image = imread(img_path)
         faces = face_detector(image).respond_data
 
@@ -94,7 +200,7 @@ def cli(ctx, image_path, json, quiet, count):
             spoofs = spoofing_detector(boxes, image).respond_data
 
         result = {
-            "path": img_path,
+            "path": os.path.basename(img_path),
             "is_reals": [bool(is_spoof) for is_spoof, _ in spoofs],
             "scores": [float(score) for _, score in spoofs],
             "boxes": boxes
@@ -104,11 +210,11 @@ def cli(ctx, image_path, json, quiet, count):
             result_str = str(result)
 
             if count:
-                result_str = f"{idx + 1}/{len(image_path)} >> " + result_str
+                result_str = f"{idx + 1}/{len(images)} >> " + result_str
 
             print(result_str)
         elif count:
-            print(f"{idx + 1}/{len(image_path)}", end="\r")
+            print(f"{idx + 1}/{len(images)}", end="\r")
         results.append(result)
 
     face_detector.stop()
@@ -116,6 +222,11 @@ def cli(ctx, image_path, json, quiet, count):
 
     if not json:
         sys.exit(0)
+
+    if os.path.isfile(json):
+        if not overwrite:
+            if not click.confirm(f"Overwrite `{os.path.basename(json)}`?", default=True):
+                raise FileExistsError(json)
 
     with open(json, "wb") as f:
         f.write(orjson.dumps(results))
