@@ -1,0 +1,15 @@
+version: "3.0"
+
+services:
+  face-attendance-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: face-anti-spoofing-core:latest
+    ports:
+    - 8000:8000
+    expose:
+      - 8000
+    env_file:
+      - config.env
+    restart: always
