@@ -9,7 +9,7 @@ from library.util import check_type
 This tool implement from OpenCV. Can you find more options at https://github.com/opencv/opencv
 Drawing: https://docs.opencv.org/2.4/modules/core/doc/drawing_functions.html
 
-* All method still cover (WIDTH, HEIGHT)
+* All method still cover (WIDTH, HEIGHT) and pixel format in RGB format.
 """
 
 IM_RGB = 0
@@ -29,15 +29,21 @@ def imread(img_path, pixel_format=IM_RGB):
     return image
 
 
-def imwrite(img, img_path, quality=DEFAULT_QUALITY, pixel_format=IM_RGB, over_write=False):
+def imwrite(img, img_path: str, quality=DEFAULT_QUALITY, pixel_format=IM_RGB, over_write=False):
     check_type("img_path", img_path, str)
+
+    if img_path.rfind(".jpg") < 0:
+        img_path = img_path + ".jpg"
+
+    if len(img_path) <= 4:
+        raise ValueError("File's name is empty!")
 
     if os.path.isfile(img_path) and not over_write:
         raise FileExistsError(img_path)
 
-    if pixel_format != IM_RGB:
+    if pixel_format == IM_RGB:
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    return cv2.imwrite(f"{img_path}.jpg", img, [cv2.IMWRITE_JPEG_QUALITY, int(quality)])
+    return cv2.imwrite(img_path, img, [cv2.IMWRITE_JPEG_QUALITY, int(quality)])
 
 
 def imdecode(buf, flag=cv2.IMREAD_COLOR, pix_fmt=IM_RGB):

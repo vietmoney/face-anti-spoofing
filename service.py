@@ -111,15 +111,13 @@ def detect(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, over
                 "landmarks": landmarks
             }
 
+            std_out = ""
+            if count:
+                std_out = f"{idx + 1}/{len(images)}\t"
+
             if not quiet:
-                result_str = str(result)
+                print(f"{std_out}{result}", flush=True)
 
-                if count:
-                    result_str = f"{idx + 1}/{len(images)} >> " + result_str
-
-                print(result_str)
-            elif count:
-                print(f"{idx + 1}/{len(images)}", end="\r")
             results.append(result)
 
     if not json:
@@ -193,15 +191,12 @@ def spoofing(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, ov
             "boxes": boxes
         }
 
+        std_out = ""
+        if count:
+            std_out = f"{idx + 1}/{len(images)}\t"
+
         if not quiet:
-            result_str = str(result)
-
-            if count:
-                result_str = f"{idx + 1}/{len(images)} >> " + result_str
-
-            print(result_str)
-        elif count:
-            print(f"{idx + 1}/{len(images)}", end="\r")
+            print(f"{std_out}{result}", flush=True)
         results.append(result)
 
     face_detector.stop()
@@ -241,7 +236,7 @@ def api(ctx, host: str, port: int, version: str):
 
     @app.get("/", description="Face Anti Spoofing - VietMoney")
     def hello():
-        return "Welcome to Face Detect & Anti Spoofing - VietMoney\nAuthor: TinDang"
+        return "Welcome to Face Detect & Anti Spoofing - Viet Money\nAuthor: TinDang"
 
     @app.post("/spoofing",
               summary="Detect spoofing face",

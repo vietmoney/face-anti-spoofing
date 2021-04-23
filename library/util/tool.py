@@ -74,3 +74,20 @@ def draw_square(img, position, color=(0, 255, 0)) -> numpy.ndarray:
         position = tuple(position)
 
     return cv2.rectangle(img, position[0:2], position[2:4], color, 2)
+
+
+def draw_text(img, label, position, color=(0, 0, 255), scale_factor=1, thickness=1,
+              font=cv2.FONT_HERSHEY_DUPLEX, wrap_text=False) -> numpy.ndarray:
+    """
+    Draw text at position in image.
+    - position: top-left of text
+    - color: support tuple and hex_color
+    :return:
+    """
+    if not isinstance(position, tuple):
+        position = tuple(position)
+
+    cv2.putText(img, label, position,
+                fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=scale_factor,
+                color=tuple(numpy.array(color)[::-1].tolist()), thickness=thickness)
+    return img

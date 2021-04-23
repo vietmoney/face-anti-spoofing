@@ -1,14 +1,133 @@
+# Viet Money - Face detection & anti-spoofing
 
-# VietMoney - Face Anti Spoofing
+Pure Python - Face detection & anti-spoofing API and CLI.
 
-This repository make api using for face attendance with anti spoofing.
 
-## Installation
-```shell
-pip3 install -r requirements.txt
+
+<img src="images/logo.png" style="zoom:60%;" align="center"/>
+
+
+
+## Prerequisite
+
+### Local
+
+- Python 3.6↑: https://www.python.org/downloads/
+- Pytorch: https://pytorch.org/get-started/previous-versions/
+
+```sh
+# Install Pytorch cuda if using NVIDIA GPU device. Default: CPU device
+
+> pip3 install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
-## Usage
-### CLI:
+
+​	*or*
+
+```shell
+# CUDA 10.2
+> pip3 install torch==1.5.0
+
+# CUDA 10.1
+> pip3 install torch==1.5.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+
+# CUDA 9.2
+> pip3 install torch==1.5.0+cu92 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+- Python package requirements:
+
+```shell
+> pip3 install -r requirements.txt
+```
+
+### Docker
+
+- Docker v20.10.5↑: https://docs.docker.com/get-docker/
+- Docker Compose v1.28.5↑: https://docs.docker.com/compose/install
+
+---
+
+
+
+## Table of Contents
+
+[TOC]
+
+## Features
+
+
+### Face detection
+
+<img src="images/example_3.jpg" style="zoom:50%;" align="left"/>
+
+
+### Face anti-spoofing detection
+
+<img src="images/example_4.jpg" style="zoom:50%;" align="left"/>
+
+
+## Get started
+
+***NOTE: all method work in RGB pixel format. *(OpenCV pixel format is BGR -> convert before using)***
+
+
+### Face detection
+
+<img src="images/example_1.jpg" alt=">" style="zoom:33.33%;" title="face spoofing detected"/>
+
+- Python API
+```python
+from library.util.image import imread
+from library.face_detector import FaceDetector
+
+face_detector = FaceDetector("data/pretrained/retina_face.pth.tar")
+
+image = imread("images/fake_001.jpg") # image in RGB format
+faces = face_detector(image)
+
+>>> faces # [[box, score, land_mark]]
+[(array([181,   5, 551, 441], dtype=int32), 
+  0.99992156, 
+  array([[249, 147],
+         [412, 145],
+         [306, 192],
+         [266, 313],
+         [404, 311]], dtype=int32))]
+```
+- CLI
+
+
+- Web API
+
+
+### **Face anti-spoofing detection**
+
+- Python API
+
+```python
+from library.util.image import imread
+from library.face_antspoofing import SpoofingDetector
+
+face_antispoofing = SpoofingDetector("data/pretrained/fasnet_v1se_v2.pth.tar")
+
+>>> face_antispoofing([box for box, _, _ in faces]) # [(is_real, score)]
+[(False, 0.5154606513679028)]
+```
+
+<img src="images/example_2.jpg" alt="=" style="zoom:33.33%;"  title="face detected"/>
+
+- CLI
+
+
+- Web API
+
+
+## Documents
+
+### CLI
+
+#### Common options
+
 ```shell
 >  python service.py --help
 Usage: service.py [OPTIONS] COMMAND [ARGS]...
@@ -29,10 +148,7 @@ Commands:
 
 ```
 
----
-#### Command:
-
-##### Face Detection
+#### Face Detection
 
 ```shell
 > python service.py detect --help
@@ -53,7 +169,7 @@ Options:
   Example: `python service.py detect ./*{.jpg,.png}` - match with any file with extension is `jpg` and `png`.
   
 - Output option:
-    - `--json PATH`: Export result to json file    
+    - `--json PATH`: Export result to JSON file    
 
     ```json
     {
@@ -67,10 +183,10 @@ Options:
     - `--quiet` Turn off STD output
     - `--count` Counting image during process
     - `--overwrite` Force write json file.
-  
----
 
-##### Face Anti Spoofing
+
+#### Face Anti Spoofing
+
 ```shell
 > python service.py spoofing --help
 Usage: service.py spoofing [OPTIONS] IMAGES...
@@ -104,9 +220,9 @@ Options:
     - `--count` Counting image during process
     - `--overwrite` Force write json file.
 
----
 
-##### API
+
+#### Host API
 ```shell
 > python service.py api --help
 Usage: service.py api [OPTIONS]
@@ -119,16 +235,41 @@ Options:
   --version TEXT  API version.
   --help          Show this message and exit.
 ```
-**_Support Docker as API service_**:
+**_Run with default uvicorn setting_**:
+
 ```shell
-docker-compose build && docker-compose up -d
+> python service.py api
+
+INFO:     Started server process [19802]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 ```
 
-**_Local run_**:
+**_Support Docker with environment setting_**:
+
 ```shell
-python service.py api
+# edit API config in `.env.example` or container env
+> cp .env.example .env
+> docker-compose build && docker-compose up -d
 ```
 
----
-Owner: VietMoney  
-Author: Tin Dang  
+### Web API
+
+#### Face detection
+
+
+
+# License
+
+[Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0](LICENSES)
+
+
+
+# Contact
+
+**Author**: Tin Dang
+
+**Email**: tindht@vietmoney.vn
+
+**Website**: [www.vietmoney.dev](www.vietmoney.dev)

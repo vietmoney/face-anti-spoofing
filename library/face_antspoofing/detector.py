@@ -80,7 +80,7 @@ class SpoofingDetector:
     Parameters:
         model_path: pretrained model
         device: device model loaded in. (Default: cpu)
-        face_size: model input size.
+        face_size: model face input size.
     """
 
     def __init__(self, model_path: str, device: str = _CPU_DEVICE, face_size=(80, 80)):

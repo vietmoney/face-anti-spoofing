@@ -186,13 +186,14 @@ class FaceDetector(object):
 
     def __init__(self, model_path,
                  detect_threshold=0.975,
-                 scale_size=480, device='cpu'):
+                 scale_size=480,
+                 device='cpu'):
         """
         Parameters
         ----------
             model_path: Path of pre-trained model
             detect_threshold: Threshold of confidence score of detector
-            scale_size: Scale size input image.
+            scale_size: Scale size input image. `Recommend in [240, 1080]`
             device: device model loaded in. (Default: cpu)
         """
         # prepare face detector
