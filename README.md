@@ -13,7 +13,7 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 ### Local
 
 - Python 3.6↑: https://www.python.org/downloads/
-- Pytorch: https://pytorch.org/get-started/previous-versions/
+- Pytorch 1.5.x: https://pytorch.org/get-started/previous-versions/
 
 ```sh
 # Install Pytorch cuda if using NVIDIA GPU device. Default: CPU device
@@ -21,7 +21,7 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 > pip3 install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-​	*or*
+	*or*
 
 ```shell
 # CUDA 10.2
@@ -51,19 +51,40 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 
 ## Table of Contents
 
-[TOC]
+- [Viet Money - Face detection & anti-spoofing](#viet-money---face-detection---anti-spoofing)
+  * [Prerequisite](#prerequisite)
+    + [Local](#local)
+    + [Docker](#docker)
+  * [Table of Contents](#table-of-contents)
+  * [Features](#features)
+    + [Face detection](#face-detection)
+    + [Face anti-spoofing detection](#face-anti-spoofing-detection)
+  * [Get started](#get-started)
+    + [Face detection](#face-detection-1)
+    + [**Face anti-spoofing detection**](#--face-anti-spoofing-detection--)
+  * [Documents](#documents)
+    + [CLI](#cli)
+      - [Common options](#common-options)
+      - [Face Detection](#face-detection)
+      - [Face Anti Spoofing](#face-anti-spoofing)
+      - [Host API](#host-api)
+    + [Web API](#web-api)
+      - [Face detection](#face-detection-2)
+- [License](#license)
+- [Contact](#contact)
+
 
 ## Features
 
 
 ### Face detection
 
-<img src="images/example_3.jpg" style="zoom:50%;"/>
+<img src="images/example_3.jpg" style="max-width:40%;"/>
 
 
 ### Face anti-spoofing detection
 
-<img src="images/example_4.jpg" style="zoom:50%;"/>
+<img src="images/example_4.jpg" style="max-width:40%;"/>
 
 
 ## Get started
@@ -72,7 +93,7 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 
 ### Face detection
 
-<img src="images/example_1.jpg" alt=">" style="zoom:33.33%;" title="face spoofing detected"/>
+<img src="images/example_1.jpg" alt=">" style="max-width:40%;" title="face spoofing detected"/>
 
 - Python API
 ```python
@@ -113,7 +134,7 @@ face_antispoofing = SpoofingDetector("data/pretrained/fasnet_v1se_v2.pth.tar")
 [(False, 0.5154606513679028)]
 ```
 
-<img src="images/example_2.jpg" alt="=" style="zoom:33.33%;"  title="face detected"/>
+<img src="images/example_2.jpg" alt="=" style="max-width:40%;"  title="face detected"/>
 
 - CLI
 
