@@ -13,7 +13,7 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 ### Local
 
 - Python 3.6↑: https://www.python.org/downloads/
-- Pytorch: https://pytorch.org/get-started/previous-versions/
+- Pytorch 1.5.0↑: https://pytorch.org/get-started/previous-versions/
 
 ```sh
 # Install Pytorch cuda if using NVIDIA GPU device. Default: CPU device
@@ -21,7 +21,7 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 > pip3 install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-​	*or*
+  *or*
 
 ```shell
 # CUDA 10.2
@@ -51,20 +51,32 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 
 ## Table of Contents
 
-[TOC]
+- [Viet Money - Face detection & anti-spoofing](#viet-money---face-detection--anti-spoofing)
+  - [Prerequisite](#prerequisite)
+    - [Local](#local)
+    - [Docker](#docker)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Get started](#get-started)
+  - [Documents](#documents)
+    - [Python API](#python-api)
+    - [Command-line interface](#command-line-interface)
+    - [Web API](#web-api)
+- [License](#license)
+- [Contact](#contact)
 
 ## Features
 
-![](./images/demo.gif)
+![](images/demo.gif)
 
 ### Face detection
 
-<img src="./images/example_3.jpg" alt="drawing" width="200"/>
+<img src="images/example_3.jpg" alt="drawing" width="200"/>
 
 
 ### Face anti-spoofing detection
 
-<img src="./images/example_4.jpg" alt="drawing" width="200"/>
+<img src="images/example_4.jpg" alt="drawing" width="200"/>
 
 
 ## Get started
@@ -101,7 +113,7 @@ faces = face_detector(image)
 > python3 service.py detect data/test/*{.jpg,.png}
 ```
 
-![](./images/detect-cli.png)
+![](images/detect-cli.png)
 
 
 - **Web API**
@@ -111,12 +123,11 @@ faces = face_detector(image)
 ```
 
 
-
-![](./images/detect-api.png)
+![](images/detect-api.png)
 
 ---
 
-### **Face anti-spoofing detection**
+### Face anti-spoofing detection
 
 - **Python API**
 
@@ -135,7 +146,7 @@ faces = face_detector(image)
 [(False, 0.5154606513679028)]
 ```
 
-<img src="images/example_2.jpg" alt="drawing" width="200"/>
+<img src="./images/example_2.jpg" alt="drawing" width="200"/>
 
 - **CLI**
 
@@ -144,7 +155,7 @@ faces = face_detector(image)
 ```
 
 
-![](/home/tindang/repo/fas/images/spoofing-cli.png)
+![](images/spoofing-cli.png)
 
 
 - **Web API**
@@ -153,7 +164,7 @@ faces = face_detector(image)
 > curl --location --request POST 'http://localhost:8000/spoofing' --form 'image=@"data/test/fake_001.jpg"'
 ```
 
-![](/home/tindang/repo/fas/images/spoofing-api.png)
+![](images/spoofing-api.png)
 
 
 
