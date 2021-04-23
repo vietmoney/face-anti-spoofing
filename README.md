@@ -1,6 +1,6 @@
 # Viet Money - Face detection & anti-spoofing
 
-Pure Python - Face detection & anti-spoofing API and CLI.
+Pure Python - Face detection & anti-spoofing. Support Web API & Command-line interface.
 
 
 
@@ -13,7 +13,7 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 ### Local
 
 - Python 3.6↑: https://www.python.org/downloads/
-- Pytorch 1.5.x: https://pytorch.org/get-started/previous-versions/
+- Pytorch: https://pytorch.org/get-started/previous-versions/
 
 ```sh
 # Install Pytorch cuda if using NVIDIA GPU device. Default: CPU device
@@ -21,7 +21,7 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 > pip3 install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-	*or*
+​	*or*
 
 ```shell
 # CUDA 10.2
@@ -51,51 +51,32 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 
 ## Table of Contents
 
-- [Viet Money - Face detection & anti-spoofing](#viet-money---face-detection---anti-spoofing)
-  * [Prerequisite](#prerequisite)
-    + [Local](#local)
-    + [Docker](#docker)
-  * [Table of Contents](#table-of-contents)
-  * [Features](#features)
-    + [Face detection](#face-detection)
-    + [Face anti-spoofing detection](#face-anti-spoofing-detection)
-  * [Get started](#get-started)
-    + [Face detection](#face-detection-1)
-    + [**Face anti-spoofing detection**](#--face-anti-spoofing-detection--)
-  * [Documents](#documents)
-    + [CLI](#cli)
-      - [Common options](#common-options)
-      - [Face Detection](#face-detection)
-      - [Face Anti Spoofing](#face-anti-spoofing)
-      - [Host API](#host-api)
-    + [Web API](#web-api)
-      - [Face detection](#face-detection-2)
-- [License](#license)
-- [Contact](#contact)
-
+[TOC]
 
 ## Features
 
+![](./images/demo.gif)
 
 ### Face detection
 
-<img src="images/example_3.jpg" style="max-width:40%;"/>
+<img src="./images/example_3.jpg" alt="drawing" width="200"/>
 
 
 ### Face anti-spoofing detection
 
-<img src="images/example_4.jpg" style="max-width:40%;"/>
+<img src="./images/example_4.jpg" alt="drawing" width="200"/>
 
 
 ## Get started
 
-***NOTE: all method work in RGB pixel format. *(OpenCV pixel format is BGR -> convert before using)***
+> NOTE: all method work in RGB pixel format. *(OpenCV pixel format is BGR -> convert before using)*
+
 
 ### Face detection
 
-<img src="images/example_1.jpg" alt=">" style="max-width:40%;" title="face spoofing detected"/>
+<img src="images/example_1.jpg" alt="drawing" width="200"/>
 
-- Python API
+- **Python API**
 ```python
 from library.util.image import imread
 from library.face_detector import FaceDetector
@@ -114,37 +95,101 @@ faces = face_detector(image)
          [266, 313],
          [404, 311]], dtype=int32))]
 ```
-- CLI
+- **CLI**
+
+```shell
+> python3 service.py detect data/test/*{.jpg,.png}
+```
+
+![](./images/detect-cli.png)
 
 
-- Web API
+- **Web API**
 
+```shell
+> curl --location --request POST 'http://localhost:8000/detect' --form 'image=@"data/test/fake_001.jpg"'
+```
+
+
+
+![](./images/detect-api.png)
+
+---
 
 ### **Face anti-spoofing detection**
 
-- Python API
+- **Python API**
 
 ```python
 from library.util.image import imread
+from library.face_detector import FaceDetector
 from library.face_antspoofing import SpoofingDetector
 
+face_detector = FaceDetector("data/pretrained/retina_face.pth.tar")
 face_antispoofing = SpoofingDetector("data/pretrained/fasnet_v1se_v2.pth.tar")
 
->>> face_antispoofing([box for box, _, _ in faces]) # [(is_real, score)]
+image = imread("images/fake_001.jpg") # image in RGB format
+faces = face_detector(image)
+
+>>> face_antispoofing([box for box, _, _ in faces], image) # [(is_real, score)]
 [(False, 0.5154606513679028)]
 ```
 
-<img src="images/example_2.jpg" alt="=" style="max-width:40%;"  title="face detected"/>
+<img src="images/example_2.jpg" alt="drawing" width="200"/>
 
-- CLI
+- **CLI**
+
+```shell
+> python3 service.py spoofing data/test/*{.jpg,.png}
+```
 
 
-- Web API
+![](/home/tindang/repo/fas/images/spoofing-cli.png)
+
+
+- **Web API**
+
+```shell
+> curl --location --request POST 'http://localhost:8000/spoofing' --form 'image=@"data/test/fake_001.jpg"'
+```
+
+![](/home/tindang/repo/fas/images/spoofing-api.png)
+
 
 
 ## Documents
 
-### CLI
+### Python API
+
+#### Face Detection
+
+- class `library.face_detector.FaceDetector`:
+  - `__init__`:
+    - `model_path`: (str) Path of pre-trained model
+    - `detect_threshold` (float): Threshold of confidence score of detector. *Default: 0.975*
+	  - `scale_size` (int): Scale size input image. Recommend in [240, 1080]. *Default: 480*
+	  - `device`: device model loaded in. *Default: cpu*
+  - `process`: Detect faces in a image
+  	- `image` (numpy.ndarray): image source
+  	return: List[Tuple[List[int], float, List[List[int]]]] - [(box, score, land_mark)]
+
+#### Face Anti Spoofing
+
+- class `library.face_antspoofing.SpoofingDetector`:
+  - `__init__`:
+    - `model_path`: (str) Path of pre-trained model
+    - `device`: device model loaded in. *Default: cpu*
+	  - `face_size` (tuple(int, int)): model face input size. *Default: (80, 80)*
+  - `predict`: Predict faces is spoof or not.
+  	- `boxes`: face's boxes
+  	- `image` (numpy.ndarray): image source
+  	return: Sequence[Tuple[bool, float]] - *[(is_real, score)]*
+
+
+
+### Command-line interface
+
+---
 
 #### Common options
 
@@ -202,7 +247,7 @@ Options:
   
     - `--quiet` Turn off STD output
     - `--count` Counting image during process
-    - `--overwrite` Force write json file.
+    - `--overwrite` Force write JSOn file.
 
 
 #### Face Anti Spoofing
@@ -242,7 +287,10 @@ Options:
 
 
 
-#### Host API
+#### Web API Hosting
+
+---
+
 ```shell
 > python service.py api --help
 Usage: service.py api [OPTIONS]
@@ -274,9 +322,26 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 > docker-compose build && docker-compose up -d
 ```
 
+
+
 ### Web API
 
-#### Face detection
+---
+
+#### Face Detection
+
+- Method: `POST`
+- URL: `/detect`
+- Form-data params:
+  - images:  `File` or `URL of image`
+
+
+#### Face Anti Spoofing
+
+- Method: `POST`
+- Path: `/spoofing`
+- Form-data params:
+  - images:  `File` or `URL of image`
 
 
 
