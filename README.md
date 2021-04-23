@@ -58,18 +58,17 @@ Pure Python - Face detection & anti-spoofing API and CLI.
 
 ### Face detection
 
-<img src="images/example_3.jpg" style="zoom:50%;" align="left"/>
+<img src="images/example_3.jpg" style="zoom:50%;"/>
 
 
 ### Face anti-spoofing detection
 
-<img src="images/example_4.jpg" style="zoom:50%;" align="left"/>
+<img src="images/example_4.jpg" style="zoom:50%;"/>
 
 
 ## Get started
 
 ***NOTE: all method work in RGB pixel format. *(OpenCV pixel format is BGR -> convert before using)***
-
 
 ### Face detection
 
