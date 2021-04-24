@@ -10,10 +10,14 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 
 ## Prerequisite
 
-### Local
+<img src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png" width="150px"/> |<img src="https://github.com/pytorch/pytorch/blob/master/docs/source/_static/img/pytorch-logo-dark.png?raw=true" width="150px" /> | <img src="https://click.palletsprojects.com/en/7.x/_images/click-logo.png" width="150px" style="padding-top:34px"/>
 
-- Python 3.6↑: https://www.python.org/downloads/
-- Pytorch 1.5.0↑: https://pytorch.org/get-started/previous-versions/
+### Manual 
+
+---
+
+- **Python 3.6**↑: https://www.python.org/downloads/
+- **Pytorch 1.5.0**↑: https://pytorch.org/get-started/previous-versions/
 
 ```sh
 # Install Pytorch cuda if using NVIDIA GPU device. Default: CPU device
@@ -40,12 +44,22 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 > pip3 install -r requirements.txt
 ```
 
-### Docker
 
-- Docker v20.10.5↑: https://docs.docker.com/get-docker/
-- Docker Compose v1.28.5↑: https://docs.docker.com/compose/install
+
+###  <img src="https://avatars.githubusercontent.com/u/5429470?s=200&v=4" width=48px />Docker
 
 ---
+
+- **Docker** v20.10.5↑: https://docs.docker.com/get-docker/
+- **Docker Compose** v1.28.5↑: https://docs.docker.com/compose/install
+
+**_Support Docker with environment setting_**:
+
+```shell
+# edit API config in `.env.example` or container env
+> cp .env.example .env
+> docker-compose build && docker-compose up -d
+```
 
 
 
@@ -65,18 +79,31 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 - [License](#license)
 - [Contact](#contact)
 
+
+
 ## Features
 
 ![](images/demo.gif)
 
+
+
 ### Face detection
+
+---
+
 
 <img src="images/example_3.jpg" alt="drawing" width="200"/>
 
 
+
 ### Face anti-spoofing detection
 
+---
+
+
+
 <img src="images/example_4.jpg" alt="drawing" width="200"/>
+
 
 
 ## Get started
@@ -125,9 +152,11 @@ faces = face_detector(image)
 
 ![](images/detect-api.png)
 
----
+
 
 ### Face anti-spoofing detection
+
+---
 
 - **Python API**
 
@@ -224,7 +253,11 @@ Commands:
 
 ```
 
+
+
 #### Face Detection
+
+---
 
 ```shell
 > python service.py detect --help
@@ -261,7 +294,10 @@ Options:
     - `--overwrite` Force write JSOn file.
 
 
+
 #### Face Anti Spoofing
+
+---
 
 ```shell
 > python service.py spoofing --help
@@ -347,6 +383,7 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
   - images:  `File` or `URL of image`
 
 
+
 #### Face Anti Spoofing
 
 - Method: `POST`
@@ -358,14 +395,19 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 
 # License
 
-[Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0](LICENSES)
+[Licensed under the Apache License, Version 2.0](LICENSE)
+
+
+
+# References
+
+- [Pytorch_Retinaface](https://github.com/biubug6/Pytorch_Retinaface)
+- [Silent-Face-Anti-Spoofing](https://github.com/minivision-ai/Silent-Face-Anti-Spoofing)
 
 
 
 # Contact
 
-**Author**: Tin Dang
-
-**Email**: tindht@vietmoney.vn
-
-**Website**: [www.vietmoney.dev](www.vietmoney.dev)
+- **Author**: Tin Dang   
+- **Email**: tindht@vietmoney.vn   
+- **Website**: [www.vietmoney.dev](www.vietmoney.dev)
