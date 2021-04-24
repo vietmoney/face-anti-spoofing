@@ -4,7 +4,6 @@ __copyright__ = "Copyright 2021, VietMoney Face Anti-spoofing"
 
 import os
 import signal
-import sys
 from typing import Sequence
 
 import click
@@ -19,6 +18,17 @@ from library.util.image import imread
 
 FACE_DETECTOR_KEY = "fa_face_detector"
 FACE_ANTI_SPOOFING = "fa_face_anti_spoofing"
+ENVVAR_PREFIX = 'FA'
+
+
+def write_json(data, json_path: str, overwrite=False):
+    if os.path.isfile(json_path):
+        if not overwrite:
+            if not click.confirm(f"Overwrite `{os.path.basename(json_path)}`?", default=True):
+                raise FileExistsError(json_path)
+
+    with open(json_path, "wb") as f:
+        f.write(orjson.dumps(data))
 
 
 @click.group()
@@ -28,18 +38,18 @@ FACE_ANTI_SPOOFING = "fa_face_anti_spoofing"
 @click.option("--detector-threshold",
               default=0.95,
               type=float,
-              help="Face detector model threshold. Default: 0.95")
+              help="Face detector model threshold.")
 @click.option("--detector-scale",
               default=720,
               type=int,
-              help="Face detector model scale. Default: 720 (>= 240px)")
+              help="Face detector model scale. (>= 240px)")
 @click.option("--spoofing-model",
               default="data/pretrained/fasnet_v1se_v2.pth.tar",
               help="Face anti-spoofing file path")
 @click.option("--device",
               default="cpu",
               type=str,
-              help="Device to load model. Default: CPU")
+              help="Device to load model.")
 @click.version_option("1.0")
 @click.pass_context
 def main(ctx, detector_model: str, detector_threshold: float, detector_scale: int, spoofing_model: str, device: str):
@@ -64,7 +74,7 @@ def main(ctx, detector_model: str, detector_threshold: float, detector_scale: in
 )
 @click.option(
     "--json", "-j",
-    help="Export result to json file",
+    help="Export results to json file",
     type=click.Path(exists=False, writable=True)
 )
 @click.option(
@@ -120,16 +130,8 @@ def detect(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, over
 
             results.append(result)
 
-    if not json:
-        sys.exit(0)
-
-    if os.path.isfile(json):
-        if not overwrite:
-            if not click.confirm(f"Overwrite `{os.path.basename(json)}`?", default=True):
-                raise FileExistsError(json)
-
-    with open(json, "wb") as f:
-        f.write(orjson.dumps(results))
+    if json:
+        write_json(results, json, overwrite)
 
 
 @main.command(help="Detect spoofing face in images")
@@ -141,7 +143,7 @@ def detect(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, over
 )
 @click.option(
     "--json", "-j",
-    help="Export result to json file",
+    help="Export results to json file",
     type=click.Path(exists=False, writable=True)
 )
 @click.option(
@@ -166,57 +168,43 @@ def spoofing(ctx, images: Sequence[str], json: str, quiet: bool, count: bool, ov
         raise click.UsageError("No output selected!")
 
     results = list()
-    face_detector = ctx.obj[FACE_DETECTOR_KEY]
-    spoofing_detector = ctx.obj[FACE_ANTI_SPOOFING]
 
     # start service
-    face_detector.start()
-    spoofing_detector.start()
+    with ctx.obj[FACE_DETECTOR_KEY] as face_detector,\
+            ctx.obj[FACE_ANTI_SPOOFING] as spoofing_detector:
+        for idx, img_path in enumerate(images):
+            image = imread(img_path)
+            faces = face_detector(image).respond_data
 
-    for idx, img_path in enumerate(images):
-        image = imread(img_path)
-        faces = face_detector(image).respond_data
+            if len(faces) <= 0:
+                boxes = list()
+                spoofs = list()
+            else:
+                boxes = [box.tolist() for box, _, _ in faces]
+                spoofs = spoofing_detector(boxes, image).respond_data
 
-        if len(faces) <= 0:
-            boxes = list()
-            spoofs = list()
-        else:
-            boxes = [box.tolist() for box, _, _ in faces]
-            spoofs = spoofing_detector(boxes, image).respond_data
+            result = {
+                "path": os.path.basename(img_path),
+                "is_reals": [bool(is_spoof) for is_spoof, _ in spoofs],
+                "scores": [float(score) for _, score in spoofs],
+                "boxes": boxes
+            }
 
-        result = {
-            "path": os.path.basename(img_path),
-            "is_reals": [bool(is_spoof) for is_spoof, _ in spoofs],
-            "scores": [float(score) for _, score in spoofs],
-            "boxes": boxes
-        }
+            std_out = ""
+            if count:
+                std_out = f"{idx + 1}/{len(images)}\t"
 
-        std_out = ""
-        if count:
-            std_out = f"{idx + 1}/{len(images)}\t"
+            if not quiet:
+                print(f"{std_out}{result}", flush=True)
+            results.append(result)
 
-        if not quiet:
-            print(f"{std_out}{result}", flush=True)
-        results.append(result)
-
-    face_detector.stop()
-    spoofing_detector.stop()
-
-    if not json:
-        sys.exit(0)
-
-    if os.path.isfile(json):
-        if not overwrite:
-            if not click.confirm(f"Overwrite `{os.path.basename(json)}`?", default=True):
-                raise FileExistsError(json)
-
-    with open(json, "wb") as f:
-        f.write(orjson.dumps(results))
+    if json:
+        write_json(results, json, overwrite)
 
 
 @main.command(help="Run service as API")
-@click.option("--host", help="API host. Default: localhost", default="localhost", type=str)
-@click.option("--port", help="API port. Default: 8000", default=8000, type=int)
+@click.option("--host", help="API host.", default="localhost", type=str)
+@click.option("--port", help="API port.", default=8000, type=int)
 @click.option("--version", help="API version.", default="1.0.0", type=str)
 @click.pass_context
 def api(ctx, host: str, port: int, version: str):
@@ -290,4 +278,4 @@ def api(ctx, host: str, port: int, version: str):
 
 
 if __name__ == '__main__':
-    main(auto_envvar_prefix='FA')
+    main(auto_envvar_prefix=ENVVAR_PREFIX, show_default=True, help_option_names=['--help', '-h'], max_content_width=120)

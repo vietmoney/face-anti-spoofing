@@ -4,13 +4,18 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 
 
 
-<img src="images/logo.png" style="zoom:60%;" align="center"/>
+<img src="images/logo.png" align="center"/>
 
 
 
 ## Prerequisite
 
-<img src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png" width="150px"/> |<img src="https://github.com/pytorch/pytorch/blob/master/docs/source/_static/img/pytorch-logo-dark.png?raw=true" width="150px" /> | <img src="https://click.palletsprojects.com/en/7.x/_images/click-logo.png" width="150px" style="padding-top:34px"/>
+<p>
+    <img src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png" width="150px"/>
+    <img src="https://github.com/pytorch/pytorch/blob/master/docs/source/_static/img/pytorch-logo-dark.png?raw=true" width="150px" />
+    <img src="https://click.palletsprojects.com/en/7.x/_images/click-logo.png" width="150px" style="padding-top:34px"/>
+</p>
+
 
 ### Manual 
 
@@ -56,8 +61,8 @@ Pure Python - Face detection & anti-spoofing. Support Web API & Command-line int
 **_Support Docker with environment setting_**:
 
 ```shell
-# edit API config in `.env.example` or container env
-> cp .env.example .env
+# edit API config in `.example` or container env
+> cp .example .env
 > docker-compose build && docker-compose up -d
 ```
 
@@ -364,8 +369,8 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 **_Support Docker with environment setting_**:
 
 ```shell
-# edit API config in `.env.example` or container env
-> cp .env.example .env
+# edit API config in `.example` or container env
+> cp .example .env
 > docker-compose build && docker-compose up -d
 ```
 

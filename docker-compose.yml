@@ -11,5 +11,5 @@ services:
     expose:
       - ${FA_API_PORT}
     env_file:
-      - .env.example
+      - .example
     restart: always
