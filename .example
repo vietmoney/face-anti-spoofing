@@ -1,0 +1,10 @@
+FA_DEVICE=cpu
+
+FA_DETECTOR_MODEL="data/pretrained/retina_face.pth.tar"
+FA_SPOOFING_MODEL="data/pretrained/fasnet_v1se_v2.pth.tar"
+FA_DETECTOR_THRESHOLD=0.95
+FA_DETECTOR_SCALE=720
+
+FA_API_HOST="0.0.0.0"
+FA_API_PORT=8000
+FA_API_VERSION="1.0.0"

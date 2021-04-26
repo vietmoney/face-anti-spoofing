@@ -1,0 +1,13 @@
+torch~=1.5.0
+opencv-contrib-python-headless>=4.2.0.34
+numpy>=1.19.4
+fastapi>=0.63.0
+python-multipart
+uvicorn~=0.13.4
+orjson~=3.5.1
+pydantic~=1.8.1
+requests~=2.25.1
+starlette~=0.13.6
+typish==1.9.1
+nptyping==1.4.1
+click~=7.1.2
